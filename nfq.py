@@ -5,7 +5,7 @@ import numpy as np
 import gym
 import time
 
-def collectData(env, episodes=10000):
+def collectData(env, episodes=400):
    '''Collect (s, a, r, s_next) experience with a 0-1 reward'''
    obs, atns, rewards, nxtObs = [], [], [], []
    for i in tqdm(range(episodes), desc='Data Generation'):
@@ -16,7 +16,7 @@ def collectData(env, episodes=10000):
          nxtOb, reward, done, _ = env.step(atn)
 
          if done:
-            reward = 1
+            reward = -1
          else:
             reward = 0
 
@@ -60,7 +60,7 @@ def cost(Q, s, a, r, sn, gamma=0.95):
    '''Squared error Qfn loss'''
    Qs  = Q(s)[range(len(a)), a.long()]
    Qsn = torch.max(Q(sn), 1)[0].detach()
-   return (Qs - r - gamma*Qsn)**2 
+   return (r + gamma*Qsn - Qs)**2 
 
 def NFQ_main(D, epochs=100):  
    Q = Policy()
@@ -84,7 +84,7 @@ def test(env, policy):
    while True:
       ob  = torch.tensor(ob).float()
       p = policy(ob)
-      atn = int(torch.argmin(p))
+      atn = int(torch.argmax(p))
       ob, r, done, _  = env.step(atn)
 
       time.sleep(0.1)
@@ -97,7 +97,7 @@ def test(env, policy):
       t += 1
        
 if __name__ == '__main__':
-   train = False 
+   train = True 
    env   = gym.make('CartPole-v0')
 
    '''Algorithm is unstable -- expect
